@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="./logo.png" alt="EVIDIQ Compass" width="160" />
+</p>
+
+<p align="center">
   <h1 align="center">EVIDIQ Compass</h1>
 </p>
 
