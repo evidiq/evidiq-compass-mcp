@@ -45,12 +45,15 @@ history, with every number traceable to a snapshot instead of a model's opinion.
    `validate_query`, `category_map`, `snapshot_status`, `whoami_listing`,
    `verify_compass_report`, `get_artifact` for free.
 
-> **Launch status: Phase 1 — live, gate bypassed, not yet listed.** Deployed at
-> `https://mcp.evidiq.dev/compass/mcp` (port 3019) with the x402 gate bypassed so every tool
-> can be exercised and its behaviour proven before payment goes live. The market index is
-> real: two snapshots, 407 agents, 1,231 services, measured coverage 1.0. One report is
-> already attested and 0G-anchored on chain. **Phase 2 (gate on, OKX.AI registration, live
-> paid settlement) is planned — the table cells below stay blank until observed.**
+> **Launch status: Phase 2 — live and paid.** Deployed at
+> `https://mcp.evidiq.dev/compass/mcp` (port 3019), the x402 gate is on and was measured from
+> outside: empty POST → 402, `HEAD` → 402 without hanging, POST without `content-type` → 415,
+> all 10 paid tools on a bare `{}` → 402, all 8 free tools on a bare `{}` → 200. The first
+> real paid call has settled on X Layer (`counterparty_history`, 0.005 USDT0). Registered on
+> OKX.AI as Agent **#10407** with all 18 tools; listing under review. The market index is
+> real: two snapshots, 407 agents, 1,231 services, measured coverage 1.0, and freshness of the
+> index is asserted by the fleet canary. Verification blocks captured earlier with the gate in
+> bypass are labelled as such below — they prove tool behaviour, not the gate.
 >
 > **Data path (§5):** the OKX agent-search REST endpoint rejects non-session credentials
 > (`code 10008`), so no wallet token can be used headlessly. Compass therefore uses **path B**:
@@ -95,17 +98,23 @@ A natural chain: `compass_capabilities` → `validate_query` → `estimate_cost`
 
 ## Proven on-chain
 
+### x402 Payment Settlement (X Layer, chain 196)
+
+| Tool | Amount | Settlement tx | Result |
+|------|--------|---------------|--------|
+| `counterparty_history` | `0.005 USDT0` | [`0xb2449c66…9afce`](https://www.oklink.com/xlayer/tx/0xb2449c66ad309821c38d6698ef396eb402646275b814d94245004d13def9afce) | `settled` · public trading record of one agent returned by the paid call |
+
+Flow: HTTP 402 challenge → EIP-3009 signature → `transferWithAuthorization` (gasless for
+the payer) → tool executes. Reproduce the quote with
+`onchainos payment quote https://mcp.evidiq.dev/compass/mcp --method POST --tool counterparty_history`;
+without `--tool` the CLI takes its discovery branch and returns the tool catalogue with an
+empty `accepts`, which is correct behaviour and not an error.
+
 ### 0G Storage Anchoring (0G mainnet, chain 16661)
 
 | Anchor tx | Storage root | Verified |
 |-----------|-------------|----------|
 | [`0xd6737ccf…b4f4`](https://chainscan.0g.ai/tx/0xd6737ccfbe182a8ced516277a4d5c9df295665670f3123ab555318520d28b4f4) | `0xa5a04eb4…e4af` | report for `FINANCE` (166 services), signer `0x8a3c…ee7D`, `verify_compass_report` → `signatureValid: true` |
-
-### x402 Payment Settlement (X Layer, chain 196)
-
-| Tool | Amount | Settlement tx | Result |
-|------|--------|---------------|--------|
-| — | — | — | Planned for Phase 2 (gate on) — cell stays blank until a real paid call settles. |
 
 ---
 
@@ -113,14 +122,15 @@ A natural chain: `compass_capabilities` → `validate_query` → `estimate_cost`
 
 | Property | Value |
 | :--- | :--- |
-| **Agent ID** | — (Phase 2) |
-| **Agent Name** | — (Phase 2) |
-| **Listing Status** | Not yet registered |
-| **Registration Tx** | — (Phase 2) |
-| **OKX Agent URL** | — (Phase 2) |
+| **Agent ID** | `#10407` |
+| **Agent Name** | `EVIDIQ Compass` |
+| **Listing Status** | `Listing under review` |
+| **Registration Tx** | [`0x214d02e4…b06f1`](https://www.oklink.com/xlayer/tx/0x214d02e49632ca0bf3c53f4576393fe4ff9f4ad3bbe6168c37d3fd73a1cb06f1) |
+| **OKX Agent URL** | https://www.okx.ai/agents/10407 |
 | **Agent Wallet** | `0x2a8efe3093278bb4bd3b2d9c7b5ba992ca4fc9b0` |
+| **Communication Addr** | `0xa4BD09C6b236C06091ceEDC62355C8d8CE7E18D0` |
 | **Report Signer** | `0x8a3c7524Aaed081825aC88eC7f4cCECFc583ee7D` (fleet signer, EIP-191) |
-| **Services Registered** | — (Phase 2: 10 Paid $0.005–$0.03, 8 Free $0.00) |
+| **Services Registered** | 18 Tools (10 Paid: $0.005–$0.03, 8 Free: $0.00) |
 
 ---
 
@@ -222,18 +232,22 @@ npm test (vitest)               → 82 passed / 82 (6 files), tsc clean
                                  402/415/HEAD handling, unhandledRejection guards
 ```
 
-### Live test (Phase 1, bypass on)
+### Live test through the OpenClaw agent (glm-5.2) — **captured under bypass, Phase 1**
 
-All 18 tools were exercised live against `https://mcp.evidiq.dev/compass/mcp` with the
-bypass on (Phase 1), through direct MCP calls and through the OpenClaw agent (glm-5.2);
-the Phase 2 gate measurements will be appended here when they happen.
+The Compass skill was exercised end-to-end by the OpenClaw agent:
+the agent read the skill, discovered the MCP server, and called all 18 tools in one run
+against `https://mcp.evidiq.dev/compass/mcp`. Full run output in `docs/live-test/compass-livetest-out.json`.
+**This capture was taken in Phase 1 with `X402_BYPASS=1`**, which is why the paid tools
+answer 200 in the log below: the point of that run was to prove every tool's behaviour,
+not the gate. The gate was measured separately once it was switched on — see the Phase 2
+block after the log.
 
 ```
 tools/list                      → 18 tools listed ✓
 Free Tools (HTTP 200)
   snapshot_status {}            → 200 ✓ (2 snapshots · 407 agents · 1231 services · coverage 1)
   category_map {}               → 200 ✓ (8 categories, 41700 sold in Software services)
-Paid Tools (200 here because the bypass was on)
+Paid Tools (200 here because this run had the bypass on — see the Phase 2 block below)
   market_rate (FINANCE)         → 200 ✓ (min 0 · p25 0.005 · median 0.09 · p75 0.875 · max 50 · n=166)
   attest_market_report (FINANCE)→ 200 ✓ digest 0x9ae2b95b… · EIP-191 sig · 0G anchored
                                     root 0xa5a04eb4… · tx 0xd6737ccf…
@@ -242,23 +256,26 @@ Paid Tools (200 here because the bypass was on)
 Public route                    → /compass/health 200 · /compass/skill.md 200 · /compass/mcp 200 ✓
 ```
 
-### Live test through the OpenClaw agent (glm-5.2)
-
-The Compass skill was exercised end-to-end by the OpenClaw agent:
-the agent read the skill, discovered the MCP server, and called all 18 tools in one run
-against `https://mcp.evidiq.dev/compass/mcp`. Full run output in `docs/live-test/compass-livetest-out.json`.
-
 ![EVIDIQ Compass MCP — live test report](./docs/live-test/report.png)
 
-### Phase 2 — planned, cells stay blank until observed
+### Phase 2 — the gate, measured after the bypass was removed
+
+Re-probed from outside once `X402_BYPASS` was deleted from the container environment and
+the service redeployed. Every assertion below was observed, not inferred:
 
 ```
-empty POST (with content-type)                     → (measure)
-all 10 paid tools, bare {}                         → (measure)
-all 8 free tools, bare {}                          → (measure)
-onchainos payment quote --tool market_rate          → (measure)
-onchainos payment pay                              → (measure: first real settlement)
-OKX.AI registration of all 18 tools                → (measure)
+empty POST (with content-type)                     → 402
+POST without content-type                          → 415
+HEAD /mcp                                          → 402, no hang
+all 10 paid tools, bare {}                         → 402
+  counterparty_history market_rate competitor_set price_my_service quote_advisor
+  demand_signal listing_audit service_gap price_trend attest_market_report
+all 8 free tools, bare {}                          → 200 with content
+  compass_capabilities estimate_cost validate_query category_map
+  snapshot_status whoami_listing verify_compass_report get_artifact
+onchainos payment quote --tool counterparty_history → 0.005 USDT0, hasBalance true
+onchainos payment pay                              → settled, tool executed
+fleet sweep across all 18 services                 → broken_entries=0
 ```
 
 ---
