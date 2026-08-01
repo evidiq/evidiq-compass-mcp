@@ -205,9 +205,24 @@ flowchart TB
 
 ## Verification Log
 
+### Offline test suite
+
+```
+npm test (vitest)               → 82 passed / 82 (6 files), tsc clean
+  test/collect.test.ts  (15)    → pagination to exhaustion, retries, dedupe, cap, coverage
+  test/store.test.ts    ( 6)    → schema, idempotent import, latestAgents, artifacts, pricesPerSweep
+  test/stats.test.ts   (17)    → cleanPrices, R-7 percentiles, distribution, bands, spread
+  test/compare.test.ts (13)    → competitor sets, placement (strictly-less pct), price bands
+  test/report.test.ts  ( 6)    → JCS canonical digest, EIP-191 sign/verify round-trip
+  test/server.test.ts  (25)    → all 18 tools through the x402 gate (bypass), usage on bare {},
+                                 402/415/HEAD handling, unhandledRejection guards
+```
+
+### Live test (Phase 1, bypass on)
+
 All 18 tools were exercised live against `https://mcp.evidiq.dev/compass/mcp` with the
-bypass on (Phase 1), through direct MCP calls; the OpenClaw run and the Phase 2 gate
-measurements will be appended here when they happen.
+bypass on (Phase 1), through direct MCP calls and through the OpenClaw agent (glm-5.2);
+the Phase 2 gate measurements will be appended here when they happen.
 
 ```
 tools/list                      → 18 tools listed ✓
