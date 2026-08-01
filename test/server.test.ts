@@ -7,7 +7,7 @@ import { CompassIndex } from "../lib/compass/index.js";
 import { createCompassServer } from "../server.js";
 import { handleX402Gate } from "../lib/x402/gate.js";
 
-const TEST_KEY = "0x" + "22".repeat(32);
+const TEST_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"; // anvil #0 - throwaway, test-only
 
 function agent(
   id: string,
@@ -338,7 +338,7 @@ describe("attestation", () => {
     expect(p.ok).toBe(true);
     expect(p.digest).toMatch(/^0x[0-9a-f]{64}$/);
     expect(p.signature).toMatch(/^0x/);
-    expect(p.signer).toBe("0x1563915e194D8CfBA1943570603F7606A3115508");
+    expect(p.signer).toBe("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
     expect(p.anchor.status).toBe("anchoring-failed");
     expect(p.report.sampleSize).toBe(3);
 
