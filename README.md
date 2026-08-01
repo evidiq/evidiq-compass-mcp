@@ -45,22 +45,6 @@ history, with every number traceable to a snapshot instead of a model's opinion.
    `validate_query`, `category_map`, `snapshot_status`, `whoami_listing`,
    `verify_compass_report`, `get_artifact` for free.
 
-> **Launch status: Phase 2 — live and paid.** Deployed at
-> `https://mcp.evidiq.dev/compass/mcp` (port 3019), the x402 gate is on and was measured from
-> outside: empty POST → 402, `HEAD` → 402 without hanging, POST without `content-type` → 415,
-> all 10 paid tools on a bare `{}` → 402, all 8 free tools on a bare `{}` → 200. The first
-> real paid call has settled on X Layer (`counterparty_history`, 0.005 USDT0). Registered on
-> OKX.AI as Agent **#10407** with all 18 tools; listing under review. The market index is
-> real: two snapshots, 407 agents, 1,231 services, measured coverage 1.0, and freshness of the
-> index is asserted by the fleet canary. Verification blocks captured earlier with the gate in
-> bypass are labelled as such below — they prove tool behaviour, not the gate.
->
-> **Data path (§5):** the OKX agent-search REST endpoint rejects non-session credentials
-> (`code 10008`), so no wallet token can be used headlessly. Compass therefore uses **path B**:
-> the fleet's own onchainos CLI session (already logged into OKX.AI) runs the sweeps on the
-> host and appends snapshots; the container only ever reads them. No second CLI session, no
-> copied credentials.
-
 ---
 
 ## What it does
