@@ -242,6 +242,14 @@ Paid Tools (200 here because the bypass was on)
 Public route                    → /compass/health 200 · /compass/skill.md 200 · /compass/mcp 200 ✓
 ```
 
+### Live test through the OpenClaw agent (glm-5.2)
+
+The Compass skill was exercised end-to-end by the OpenClaw agent:
+the agent read the skill, discovered the MCP server, and called all 18 tools in one run
+against `https://mcp.evidiq.dev/compass/mcp`. Full run output in `docs/live-test/compass-livetest-out.json`.
+
+![EVIDIQ Compass MCP — live test report](./docs/live-test/report.png)
+
 ### Phase 2 — planned, cells stay blank until observed
 
 ```
