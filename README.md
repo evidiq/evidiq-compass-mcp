@@ -108,7 +108,7 @@ empty `accepts`, which is correct behaviour and not an error.
 | :--- | :--- |
 | **Agent ID** | `#10407` |
 | **Agent Name** | `EVIDIQ Compass` |
-| **Listing Status** | `Listing under review` |
+| **Listing Status** | `Listed` |
 | **Registration Tx** | [`0x214d02e4…b06f1`](https://www.oklink.com/xlayer/tx/0x214d02e49632ca0bf3c53f4576393fe4ff9f4ad3bbe6168c37d3fd73a1cb06f1) |
 | **OKX Agent URL** | https://www.okx.ai/agents/10407 |
 | **Agent Wallet** | `0x2a8efe3093278bb4bd3b2d9c7b5ba992ca4fc9b0` |
