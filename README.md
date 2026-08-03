@@ -292,6 +292,27 @@ docker run -d --env-file .env -p 3019:3019 evidiq-compass:latest
 # (systemd timer) writes them there — see deploy/run.sh for the wired-up version.
 ```
 
+The collector is **not** part of the container. It runs on the host, because it drives
+the `onchainos` CLI against a logged-in OKX session that the container cannot reach.
+Both units live in `deploy/`:
+
+```bash
+install -m644 deploy/evidiq-compass-collect.{service,timer} /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now evidiq-compass-collect.timer
+systemctl start evidiq-compass-collect.service   # seed the index immediately
+```
+
+Two consequences that are easy to miss when the service is moved to another host:
+
+- The container alone is not Compass. `/root/evidiq-compass-data/snapshots` is the
+  history the answers are computed from — move it too, or the new host serves
+  `snapshots: 0, stale: true`. The snapshot files are immutable, so they copy safely
+  while the service is running; the SQLite file should *not* be copied, since the
+  container rebuilds its index from the snapshots.
+- The collector belongs to whichever host currently serves. Enable the timer there and
+  disable it on the old host, so one collector writes one history.
+
+
 ---
 
 ## License

@@ -1,0 +1,21 @@
+[Unit]
+Description=EVIDIQ Compass market snapshot collector
+After=network-online.target
+
+# The collector runs on the HOST, not in the container: it drives the onchainos CLI
+# against a logged-in OKX session, which the container has no access to. It appends
+# immutable snapshot files to the mounted volume; the container only reads them.
+#
+# It therefore belongs on whichever host currently serves Compass. After a host move,
+# install this unit there and disable it on the old host — two collectors writing one
+# service's history, or a collector on a host that no longer serves, both end with the
+# index reported stale.
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/node /root/evidiq-compass-src/dist/collect-cli.js --data-dir /root/evidiq-compass-data/snapshots --cli /root/.local/bin/onchainos --delay-ms 250 --max-calls 200
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

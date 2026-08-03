@@ -1,0 +1,10 @@
+[Unit]
+Description=Run EVIDIQ Compass collector every 6 hours
+
+[Timer]
+OnCalendar=*-*-* 0/6:15:00
+Persistent=true
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target
