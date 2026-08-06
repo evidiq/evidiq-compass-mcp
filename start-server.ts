@@ -32,6 +32,43 @@ console.log(
     `${index.state().snapshots} snapshots, coverage ${index.state().minCoverage}`,
 );
 
+// Re-ingest on a timer, because ingest() at startup is not enough on its own.
+//
+// The collector writes a snapshot JSON every six hours; the serving process imports the
+// snapshots directory into the database. When that import only happened at boot, a container
+// that stayed up served whatever it had at boot — measured 2026-08-06: the index answered from
+// 2026-08-03, 73 hours stale, with twelve collected snapshots sitting unimported on disk while
+// the collector reported success every cycle. Paid tools were pricing against three-day-old
+// market data and `snapshot_status` was correctly reporting itself stale with nobody acting on
+// it.
+//
+// ingest() is cheap and idempotent: it lists the directory and skips every sweepId already in
+// the database, so a short interval costs a readdir and nothing else.
+const INGEST_INTERVAL_SEC = Number(process.env.COMPASS_INGEST_INTERVAL_SEC || 900);
+if (INGEST_INTERVAL_SEC > 0) {
+  const timer = setInterval(() => {
+    const before = index.state().snapshots;
+    index
+      .ingest()
+      .then(() => {
+        const after = index.state();
+        if (after.snapshots !== before) {
+          console.log(
+            `[compass] ingested ${after.snapshots - before} new snapshot(s): ` +
+              `${after.agents} agents, ${after.services} services, stale=${after.stale}`,
+          );
+        }
+      })
+      .catch((err) => {
+        // A failed ingest must never take the service down: the previous index stays served
+        // and `snapshot_status` keeps reporting its true age.
+        console.warn(`[compass] ingest failed: ${err instanceof Error ? err.message : err}`);
+      });
+  }, INGEST_INTERVAL_SEC * 1000);
+  timer.unref();
+  console.log(`[compass] re-ingesting every ${INGEST_INTERVAL_SEC}s`);
+}
+
 const handler = createCompassServer(index);
 
 const gatedHandler = (req: Request) => handleX402Gate(req, handler);

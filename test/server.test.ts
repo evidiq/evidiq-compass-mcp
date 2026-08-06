@@ -47,6 +47,18 @@ function agent(
   };
 }
 
+// Fixture sweeps are dated RELATIVE to now, not to the calendar.
+//
+// These were literals — "2026-08-01" and "2026-08-02" — and one assertion demanded
+// `stale === false`. Staleness is measured against a 7-hour budget, so the suite went red a few
+// hours after those dates and stayed red: by 2026-08-06 it had been failing for days, and a
+// permanently red test is one nobody reads. It failed to flag the real defect it was shaped to
+// catch, an index that had not been re-ingested in 73 hours.
+//
+// sweep B sits inside the freshness budget and sweep A outside it, whenever the suite runs.
+const SWEEP_A_AT = new Date(Date.now() - 26 * 3600 * 1000).toISOString();
+const SWEEP_B_AT = new Date(Date.now() - 1 * 3600 * 1000).toISOString();
+
 function snap(sweepId: string, startedAt: string, agents: Snapshot["agents"][]): Snapshot {
   const flat = agents.flat();
   return {
@@ -102,12 +114,12 @@ beforeAll(async () => {
   dir = await mkdtemp(join(tmpdir(), "compass-server-"));
   const snapshotsDir = join(dir, "snapshots");
   await mkdir(snapshotsDir, { recursive: true });
-  const sweepA = snap("sweep-a", "2026-08-01T00:00:00.000Z", [
+  const sweepA = snap("sweep-a", SWEEP_A_AT, [
     agent("1", { fee: 0.005, sold: 5 }),
     agent("2", { fee: 0.02, sold: 2 }),
     agent("3", { category: "DATA", fee: 0.01 }),
   ]);
-  const sweepB = snap("sweep-b", "2026-08-02T00:00:00.000Z", [
+  const sweepB = snap("sweep-b", SWEEP_B_AT, [
     agent("1", { fee: 0.01, sold: 5 }),
     agent("2", { fee: 0.03, sold: 2 }),
     agent("3", { category: "DATA", fee: 0.01 }),
@@ -181,7 +193,7 @@ describe("free tools answer a bare {} call with 200", () => {
   it("snapshot_status", async () => {
     const p = payloadOf(await call("snapshot_status"));
     expect(p.ok).toBe(true);
-    expect(p.index.lastSweepAt).toBe("2026-08-02T00:00:00.000Z");
+    expect(p.index.lastSweepAt).toBe(SWEEP_B_AT);
     expect(p.index.stale).toBe(false);
   });
 
@@ -245,7 +257,7 @@ describe("paid tools answer with basis, snapshotAt and coverage", () => {
     expect(p.distribution.median).not.toBeNull();
     expect(p.ratingBands.length).toBeGreaterThan(0);
     expect(p.basis).toBe("listed_price");
-    expect(p.snapshotAt).toBe("2026-08-02T00:00:00.000Z");
+    expect(p.snapshotAt).toBe(SWEEP_B_AT);
     expect(p.coverage).toBe(1);
     expect(p.stale).toBe(false);
   });
